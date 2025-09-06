@@ -36,6 +36,42 @@ android {
             )
         }
     }
+    
+    // 添加产品风味配置
+    flavorDimensions += "abi"
+    productFlavors {
+        create("universal") {
+            dimension = "abi"
+            ndk {
+                abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            }
+        }
+        create("armeabiV7a") {
+            dimension = "abi"
+            ndk {
+                abiFilters += listOf("armeabi-v7a")
+            }
+        }
+        create("arm64V8a") {
+            dimension = "abi"
+            ndk {
+                abiFilters += listOf("arm64-v8a")
+            }
+        }
+        create("x86") {
+            dimension = "abi"
+            ndk {
+                abiFilters += listOf("x86")
+            }
+        }
+        create("x86_64") {
+            dimension = "abi"
+            ndk {
+                abiFilters += listOf("x86_64")
+            }
+        }
+    }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

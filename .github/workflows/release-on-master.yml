@@ -40,6 +40,7 @@ jobs:
           echo "- Markdown editor with URL download support" >> log/changelog.md
           echo "- File open and save functionality" >> log/changelog.md
           echo "- Responsive layout for portrait and landscape modes" >> log/changelog.md
+          echo "- Multi-architecture support" >> log/changelog.md
           
           # 提取版本信息
           SECTION=$(awk '/^## \[/{if (++n == 1) print; nextfile}' log/changelog.md | head -n 1)
@@ -62,8 +63,8 @@ jobs:
         run: |
           keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype pkcs12
 
-      # 构建Release APK
-      - name: Build Release APK
+      # 构建所有架构的APK
+      - name: Build All APKs
         run: ./gradlew assembleRelease --stacktrace
 
       # 创建GitHub Release
@@ -75,17 +76,73 @@ jobs:
         with:
           tag_name: v${{ steps.extract_changelog.outputs.version }}-${GITHUB_SHA:0:8}
           release_name: Release ${{ steps.extract_changelog.outputs.version }}
-          body: ${{ steps.extract_changelog.outputs.body }}
+          body: |
+            ${{ steps.extract_changelog.outputs.body }}
+            
+            ## Architecture Variants
+            This release includes the following APK variants:
+            
+            - **app-universal-release.apk** - Universal version (all architectures, larger file)
+            - **app-arm64V8a-release.apk** - ARMv8 (64-bit) - Recommended for modern Android devices (2015+)
+            - **app-armeabiV7a-release.apk** - ARMv7 (32-bit) - For older Android devices
+            - **app-x86_64-release.apk** - x86_64 (64-bit) - For Chromebooks and Android emulators
+            - **app-x86-release.apk** - x86 (32-bit) - For older Chromebooks and emulators
+            
+            ### Recommendations
+            - **Universal version**: Suitable for most users, contains all architectures but larger file size
+            - **ARM64 version**: Recommended for modern Android devices (post-2015)
+            - **ARMv7 version**: Compatible with older Android devices
+            - **x86 versions**: Suitable for Chromebooks and Android emulators
           draft: false
           prerelease: false
 
-      # 上传APK到Release
-      - name: Upload APK to Release
+      # 上传所有APK到Release
+      - name: Upload Universal APK
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-release.apk
-          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}.apk
+          asset_path: app/build/outputs/apk/universal/release/app-universal-release.apk
+          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}-universal.apk
+          asset_content_type: application/vnd.android.package-archive
+          
+      - name: Upload ARM64 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/arm64V8a/release/app-arm64V8a-release.apk
+          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}-arm64.apk
+          asset_content_type: application/vnd.android.package-archive
+          
+      - name: Upload ARMv7 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/armeabiV7a/release/app-armeabiV7a-release.apk
+          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}-arm32.apk
+          asset_content_type: application/vnd.android.package-archive
+          
+      - name: Upload x86_64 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/x86_64/release/app-x86_64-release.apk
+          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}-x86_64.apk
+          asset_content_type: application/vnd.android.package-archive
+          
+      - name: Upload x86 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/x86/release/app-x86-release.apk
+          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}-x86.apk
           asset_content_type: application/vnd.android.package-archive
