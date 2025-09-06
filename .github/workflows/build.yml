@@ -215,33 +215,36 @@ jobs:
         echo -e '\n---\n' >> ./release_body.md
 
     # 5. 创建完整的发布说明
-    - name: 📝 Prepare release notes
-      run: |
-        VERSION="${{ needs.Android_Build.outputs.build_version }}"
-        CHANGELOG_CONTENT="${{ needs.Android_Build.outputs.changelog_content }}"
-        
-        # 创建发布说明头部
-        cat << EOF > ./release_header.md
+- name: 📝 Prepare release notes
+  run: |
+    VERSION="${{ needs.Android_Build.outputs.build_version }}"
+    CHANGELOG_CONTENT="${{ needs.Android_Build.outputs.changelog_content }}"
+    
+    # 创建发布说明头部
+    cat > ./release_header.md << 'EOF'
 # 🎉 Release $VERSION
 
 ## 📝 变更内容
 
-${CHANGELOG_CONTENT}
+$CHANGELOG_CONTENT
 
 ## 📊 发布信息
 
 - **构建时间**: $(date +"%Y-%m-%d %H:%M:%S")
 - **提交版本**: ${GITHUB_SHA:0:8}
 - **构建编号**: #$GITHUB_RUN_NUMBER
-
 EOF
-
-        # 合并发布说明
-        cat ./release_header.md ./release_body.md > ./final_release_notes.md
-        rm ./release_header.md ./release_body.md
-        
-        echo "✅ Release notes prepared:"
-        cat ./final_release_notes.md
+    
+    # 替换变量（如果使用单引号EOF）
+    sed -i "s/\$VERSION/$VERSION/g" ./release_header.md
+    sed -i "s/\$CHANGELOG_CONTENT/$CHANGELOG_CONTENT/g" ./release_header.md
+    
+    # 合并发布说明
+    cat ./release_header.md ./release_body.md > ./final_release_notes.md
+    rm ./release_header.md ./release_body.md
+    
+    echo "✅ Release notes prepared:"
+    cat ./final_release_notes.md
 
     # 6. 创建Git标签
     - name: 🏷️ Create Git Tag
