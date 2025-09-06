@@ -1,28 +1,41 @@
-名称：运行构建测试
+name: Test Build on Push
+on:
+  push:
+    branches:
+      - '**'  # 所有分支
+  pull_request:
+    branches:
+      - '**'  # 所有分支
 
-在：
-  拉取请求：
-    分支机构：
-      -开发
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-工作：
-  测试：
-    运行于：ubuntu-latest
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    步骤：
-      -名称：检出 git 存储库
-        用途：actions/checkout@v4
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
 
-      -名称：安装 Node.js
-        用途：actions/setup-node@v4
-        和：
-          节点版本：20
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-      -名称：安装依赖项
-        运行：npm ci
+      # 创建keystore（用于测试构建）
+      - name: Create keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype pkcs12
 
-      -名称：Eslint 检查
-        运行：npm run lint
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
 
-      -名称：测试构建
-        运行：npm run build-test
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/app-release.apk

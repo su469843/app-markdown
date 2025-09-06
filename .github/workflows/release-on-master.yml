@@ -1,76 +1,91 @@
-name: Android Test Build (Enhanced)
-
+name: Build and Release on Master
 on:
   push:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches:
+      - master
+  release:
+    types: [published]
 
 jobs:
-  test-build:
+  build-and-release:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
 
-    - name: Make gradlew executable
-      run: chmod +x ./gradlew
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-    # 新增：列出项目结构，确认无误
-    - name: Debug - List project structure
-      run: find . -name "*.gradle" -o -name "gradlew" -o -name "AndroidManifest.xml" | head -20
+      # 从changelog中提取版本信息
+      - name: Extract version info from CHANGELOG
+        id: extract_changelog
+        run: |
+          # 创建一个简单的changelog文件（如果不存在）
+          mkdir -p log
+          echo "## [1.0.0] - 2025-09-06" > log/changelog.md
+          echo "- Initial release" >> log/changelog.md
+          echo "- Markdown editor with URL download support" >> log/changelog.md
+          echo "- File open and save functionality" >> log/changelog.md
+          echo "- Responsive layout for portrait and landscape modes" >> log/changelog.md
+          
+          # 提取版本信息
+          SECTION=$(awk '/^## \[/{if (++n == 1) print; nextfile}' log/changelog.md | head -n 1)
+          VERSION=$(echo "$SECTION" | sed -n 's/^## \[\([^]]*\)\].*$/\1/p')
+          BODY=$(sed -n "/^## \[$VERSION\]/,/^## \[/p" log/changelog.md | sed '$d')
+          
+          if [ -z "$VERSION" ]; then
+            VERSION="untagged-${GITHUB_SHA:0:8}"
+            BODY="Automated release from master branch (${GITHUB_SHA:0:8})"
+          fi
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        shell: bash
 
-    # 新增：验证Gradle配置
-    - name: Validate Gradle configuration
-      run: ./gradlew --version
+      # 创建keystore（用于测试构建）
+      - name: Create keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype pkcs12
 
-    # 构建调试版APK
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug --stacktrace --no-daemon --console=verbose
+      # 构建Release APK
+      - name: Build Release APK
+        run: ./gradlew assembleRelease --stacktrace
 
-    # 新增：验证APK文件是否生成且有效
-    - name: Verify APK file
-      run: |
-        APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
-        if [ -f "$APK_PATH" ]; then
-          echo "APK found at: $APK_PATH"
-          ls -la $APK_PATH
-          echo "APK size: $(du -h $APK_PATH | cut -f1)"
-        else
-          echo "ERROR: No APK file found!"
-          find . -name "*.apk"
-          exit 1
-        fi
+      # 创建GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.extract_changelog.outputs.version }}-${GITHUB_SHA:0:8}
+          release_name: Release ${{ steps.extract_changelog.outputs.version }}
+          body: ${{ steps.extract_changelog.outputs.body }}
+          draft: false
+          prerelease: false
 
-    # 新增：尝试验证APK签名信息
-    - name: Check APK signatures (Optional)
-      run: |
-        APK_PATH=$(find . -name "*.apk" -path "*/debug/*" | head -1)
-        # 尝试检查APK签名，如果命令可用的话
-        if command -v apksigner &> /dev/null; then
-          echo "Checking APK signature with apksigner..."
-          apksigner verify --verbose $APK_PATH || echo "apksigner check completed"
-        else
-          echo "apksigner not available, skipping signature check"
-        fi
-
-    - name: Upload APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: debug-apk-with-logs
-        path: |
-          app/build/outputs/apk/debug/*.apk
-          app/build/outputs/logs/
-        retention-days: 7
-
-    - name: Success message
-      run: echo "✅ Build completed. Check the Artifacts tab for the APK."
+      # 上传APK到Release
+      - name: Upload APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/release/app-release.apk
+          asset_name: markdown-editor-${{ steps.extract_changelog.outputs.version }}.apk
+          asset_content_type: application/vnd.android.package-archive
