@@ -1,0 +1,55 @@
+name: Android Test Build
+
+on:
+  push:
+    branches: [ main, master ] # 推送到主分支时触发
+  pull_request:
+    branches: [ main, master ] # 创建PR时也触发
+  workflow_dispatch: # 允许在GitHub页面上手动触发
+
+jobs:
+  test-build:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+    # 第一步：获取代码
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 第二步：设置Java环境
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    # 第三步：设置Android SDK（使用官方推荐的第三方action）
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+      # 这个action会自动安装SDK并接受许可证
+
+    # 第四步：确保gradlew有执行权限
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+
+    # 第五步：构建调试版APK（无需签名）
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug --stacktrace --no-daemon
+
+    # 第六步：上传构建产物供下载
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: |
+          app/build/outputs/apk/debug/*.apk
+          app/build/outputs/apk/debug/output.json
+        retention-days: 7
+
+    # 第七步：可选 - 显示构建成功信息
+    - name: Build succeeded ✅
+      run: |
+        echo "🎉 Android测试构建成功！"
+        echo "📦 APK文件可在右侧Artifacts区域下载"
+        echo "🛠️  构建于: $(date)"
