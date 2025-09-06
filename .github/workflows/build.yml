@@ -16,149 +16,157 @@ jobs:
       changelog_content: ${{ steps.extract_version.outputs.changelog_content }}
 
     steps:
-    # 1. 检出代码
-    - name: 📦 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      # 1. 检出代码
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    # 2. 验证ChangLog文件存在
-    - name: 📋 Verify ChangLog.md exists
-      id: check_changelog
-      run: |
-        if [ ! -f "log/ChangLog.md" ]; then
-          echo "❌ Error: log/ChangLog.md not found!"
-          echo "Available files in log/ directory:"
-          ls -la log/ 2>/dev/null || echo "log/ directory does not exist"
-          exit 1
-        fi
-        echo "✅ log/ChangLog.md found"
-    - name: Extract latest version from ChangLog
-      id: extract_version
-      run: |
-        CHANGELOG_FILE="log/ChangLog.md"
-        
-        # 提取最新的版本号（第一个遇到的版本号）
-        LATEST_VERSION=$(grep -m 1 '^## \[' "$CHANGELOG_FILE" | sed -E 's/^## \[([^]]+)\].*$/\1/')
-        
-        if [ -z "$LATEST_VERSION" ]; then
-          echo "❌ No version found in ChangLog.md"
-          exit 1
-        fi
-        
-        echo "Latest version from ChangLog: $LATEST_VERSION"
-        echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
-        
-        # 提取该版本的变更内容
-        CHANGELOG_BODY=$(awk -v version="$LATEST_VERSION" '
-          BEGIN { found=0; output="" }
-          /^## \[/ {
-              if (found) exit
-              if ($0 ~ "## \\[" version "\\]") {
-                  found=1
-                  next
-              }
-          }
-          found && /^## \[/ { exit }
-          found { 
-              # 跳过版本标题行本身
-              if (!($0 ~ /^## \[/)) {
-                  output = output $0 "\n"
-              }
-          }
-          END { print output }
-        ' "$CHANGELOG_FILE")
-        
-        echo "changelog_body<<EOF" >> $GITHUB_OUTPUT
-        echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      # 2. 验证ChangLog文件存在
+      - name: 📋 Verify ChangLog.md exists
+        id: check_changelog
+        run: |
+          if [ ! -f "log/ChangLog.md" ]; then
+            echo "❌ Error: log/ChangLog.md not found!"
+            echo "Available files in log/ directory:"
+            ls -la log/ 2>/dev/null || echo "log/ directory does not exist"
+            exit 1
+          fi
+          echo "✅ log/ChangLog.md found"
+      
+      - name: Extract latest version from ChangLog
+        id: extract_version
+        run: |
+          CHANGELOG_FILE="log/ChangLog.md"
+          
+          # 提取最新的版本号（第一个遇到的版本号）
+          LATEST_VERSION=$(grep -m 1 '^## \[' "$CHANGELOG_FILE" | sed -E 's/^## \[([^]]+)\].*$/\1/')
+          
+          if [ -z "$LATEST_VERSION" ]; then
+            echo "❌ No version found in ChangLog.md"
+            exit 1
+          fi
+          
+          echo "Latest version from ChangLog: $LATEST_VERSION"
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          
+          # 提取该版本的变更内容
+          CHANGELOG_BODY=$(awk -v version="$LATEST_VERSION" '
+            BEGIN { found=0; output="" }
+            /^## \[/ {
+                if (found) exit
+                if ($0 ~ "## \\[" version "\\]") {
+                    found=1
+                    next
+                }
+            }
+            found && /^## \[/ { exit }
+            found { 
+                # 跳过版本标题行本身
+                if (!($0 ~ /^## \[/)) {
+                    output = output $0 "\n"
+                }
+            }
+            END { print output }
+          ' "$CHANGELOG_FILE")
+          
+          echo "changelog_body<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
 
-    - name: Make gradlew executable
-      run: chmod +x ./gradlew
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
 
-    - name: 🔐 Setup signing keystore
-      run: |
-        if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
-          echo "❌ Error: KEYSTORE_BASE64 secret is not set!"
-          exit 1
-        fi
-        
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
-        
-        if [ ! -f "app/release.keystore" ]; then
-          echo "❌ Error: Failed to create keystore file"
-          exit 1
-        fi
-        
-        echo "✅ Keystore created successfully"
-        ls -la app/release.keystore
-    # 8. 构建签名发布版APK
-    - name: 🏗️ Build signed release APK
-      run: |
-        ./gradlew assembleRelease \
-          -PreleaseStoreFile=release.keystore \
-          -PreleaseStorePassword=${{ secrets.KEYSTORE_PASSWORD }} \
-          -PreleaseKeyAlias=${{ secrets.KEY_ALIAS }} \
-          -PreleaseKeyPassword=${{ secrets.KEY_PASSWORD }} \
-          --stacktrace \
-          --no-daemon \
-          --warning-mode=none
+      - name: 🔐 Setup signing keystore
+        run: |
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "❌ Error: KEYSTORE_BASE64 secret is not set!"
+            exit 1
+          fi
+          
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
+          
+          if [ ! -f "app/release.keystore" ]; then
+            echo "❌ Error: Failed to create keystore file"
+            exit 1
+          fi
+          
+          echo "✅ Keystore created successfully"
+          ls -la app/release.keystore
+      
+      # 8. 构建签名发布版APK
+      - name: 🏗️ Build signed release APK
+        run: |
+          ./gradlew assembleRelease \
+            -PreleaseStoreFile=release.keystore \
+            -PreleaseStorePassword=${{ secrets.KEYSTORE_PASSWORD }} \
+            -PreleaseKeyAlias=${{ secrets.KEY_ALIAS }} \
+            -PreleaseKeyPassword=${{ secrets.KEY_PASSWORD }} \
+            --stacktrace \
+            --no-daemon \
+            --warning-mode=none
 
-        echo "✅ Build completed successfully"
-        
-        # 显示生成的APK文件
-        echo "📦 Generated APK files:"
-        find app/build/outputs -name "*.apk" -exec ls -la {} \;
-    - name: ⬆️ Upload APK artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: signed-apk-${{ steps.extract_version.outputs.version }}
-        path: |
-          app/build/outputs/apk/release/*.apk
-          app/build/outputs/bundle/release/*.aab
-        retention-days: 7
-        if-no-files-found: error
+          echo "✅ Build completed successfully"
+          
+          # 显示生成的APK文件
+          echo "📦 Generated APK files:"
+          find app/build/outputs -name "*.apk" -exec ls -la {} \;
+      
+      - name: ⬆️ Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-apk-${{ steps.extract_version.outputs.version }}
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+          retention-days: 7
+          if-no-files-found: error
 
+      # 10. 清理敏感文件
+      - name: 🧹 Cleanup keystore
+        run: |
+          rm -f app/release.keystore
+          echo "✅ Keystore cleaned up"
 
-    # 10. 清理敏感文件
-    - name: 🧹 Cleanup keystore
-      run: |
-        rm -f app/release.keystore
-        echo "✅ Keystore cleaned up"
-
+  # 创建发布版本
+  Create_Release:
+    name: 🚀 Create GitHub Release
+    needs: Android_Build  # 依赖构建作业
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📦 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: signed-apk-${{ needs.Android_Build.outputs.build_version }}
+          path: artifacts/
       
       - name: 📝 Create GitHub Release
         id: create_release
-        uses: softprops/action-gh-release@v2 # 一个流行的创建Release的Action:cite[6]
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.Android_Build.outputs.build_version }}
           name: Release ${{ needs.Android_Build.outputs.build_version }}
           body: |
-            Automated release for commit ${GITHUB_SHA}
+            Automated release for commit ${{ github.sha }}
+            
             **Build Date:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            **Features:**
-            - Auto-generated by GitHub Actions
-            # 可以从 ChangLog.md 或其他地方提取更详细的说明
-          draft: false # 是否设置为草稿:cite[1]
-          prerelease: false # 是否设置为预发布版:cite[1]
+            
+            **Changelog:**
+            ${{ needs.Android_Build.outputs.changelog_content }}
+          draft: false
+          prerelease: false
           files: |
             artifacts/*.apk
             artifacts/*.aab
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用Github提供的token:cite[4]
-
-    # 11. 构建完成通知
-    - name: ✅ Build completed
-      run: |
-        echo "🎉 Android build completed successfully!"
-        echo "🏷️ Version: ${{ steps.extract_version.outputs.version }}"
-        echo "📦 APK files are ready for release"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
