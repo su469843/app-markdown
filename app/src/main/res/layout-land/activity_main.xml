@@ -22,7 +22,9 @@
             android:background="@android:color/white"
             android:padding="12dp"
             android:layout_marginBottom="8dp"
-            android:elevation="4dp" />
+            android:elevation="4dp"
+            android:textColor="#333333"
+            android:textColorHint="#999999" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,8 +49,32 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
                 android:text="预览"
                 android:backgroundTint="#2196F3"
+                android:textColor="@android:color/white"
+                android:elevation="4dp" />
+                
+            <Button
+                android:id="@+id/openButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginEnd="4dp"
+                android:text="打开"
+                android:backgroundTint="#FF9800"
+                android:textColor="@android:color/white"
+                android:elevation="4dp" />
+                
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="保存"
+                android:backgroundTint="#9C27B0"
                 android:textColor="@android:color/white"
                 android:elevation="4dp" />
         </LinearLayout>
@@ -65,7 +91,9 @@
             android:background="@android:color/white"
             android:padding="16dp"
             android:layout_marginBottom="8dp"
-            android:elevation="4dp" />
+            android:elevation="4dp"
+            android:textColor="#333333"
+            android:textColorHint="#999999" />
     </LinearLayout>
 
     <ScrollView

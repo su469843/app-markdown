@@ -8,6 +8,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import io.noties.markwon.Markwon;
 import io.qzz.studyhard.markdown.network.MarkdownDownloader;
 
@@ -17,6 +23,10 @@ public class MainActivity extends Activity {
     private TextView previewText;
     private Button downloadButton;
     private Button previewButton;
+    private Button openButton;
+    private Button saveButton;
+    
+    private static final String FILENAME = "markdown_content.txt";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +39,8 @@ public class MainActivity extends Activity {
         previewText = findViewById(R.id.previewText);
         downloadButton = findViewById(R.id.downloadButton);
         previewButton = findViewById(R.id.previewButton);
+        openButton = findViewById(R.id.openButton);
+        saveButton = findViewById(R.id.saveButton);
 
         // 设置下载按钮点击事件
         downloadButton.setOnClickListener(new View.OnClickListener() {
@@ -45,6 +57,25 @@ public class MainActivity extends Activity {
                 previewMarkdown();
             }
         });
+        
+        // 设置打开按钮点击事件
+        openButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openMarkdownFile();
+            }
+        });
+        
+        // 设置保存按钮点击事件
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                saveMarkdownFile();
+            }
+        });
+        
+        // 加载之前保存的内容
+        loadMarkdownFile();
     }
 
     private void downloadMarkdown() {
@@ -80,5 +111,44 @@ public class MainActivity extends Activity {
         // 使用Markwon解析并显示Markdown
         Markwon markwon = Markwon.create(this);
         markwon.setMarkdown(previewText, markdownText);
+    }
+    
+    private void openMarkdownFile() {
+        loadMarkdownFile();
+        Toast.makeText(this, "文件已加载", Toast.LENGTH_SHORT).show();
+    }
+    
+    private void saveMarkdownFile() {
+        try {
+            FileOutputStream fos = openFileOutput(FILENAME, MODE_PRIVATE);
+            String content = editText.getText().toString();
+            fos.write(content.getBytes());
+            fos.close();
+            Toast.makeText(this, "文件已保存", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Toast.makeText(this, "保存失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+    
+    private void loadMarkdownFile() {
+        try {
+            FileInputStream fis = openFileInput(FILENAME);
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader br = new BufferedReader(isr);
+            StringBuilder content = new StringBuilder();
+            String line;
+            
+            while ((line = br.readLine()) != null) {
+                content.append(line).append("\n");
+            }
+            
+            br.close();
+            isr.close();
+            fis.close();
+            
+            editText.setText(content.toString());
+        } catch (IOException e) {
+            // 文件不存在是正常情况，不需要提示
+        }
     }
 }
