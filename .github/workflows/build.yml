@@ -6,6 +6,10 @@ on:
       - master  # 推送到master分支时触发构建
   workflow_dispatch:  # 允许手动触发
 
+# 为整个工作流或特定job设置权限
+permissions:
+  contents: write  # 创建Release和上传资产需要write权限:cite[6]
+
 jobs:
   # 第一个环节：构建签名安卓应用
   Android_Build:
@@ -34,6 +38,7 @@ jobs:
           fi
           echo "✅ log/ChangLog.md found"
       
+      # 3. 从Changelog中提取版本信息和变更内容
       - name: Extract latest version from ChangLog
         id: extract_version
         run: |
@@ -74,18 +79,22 @@ jobs:
           echo "$CHANGELOG_BODY" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       
+      # 4. 设置JDK 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # 5. 设置Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
 
+      # 6. 授予gradlew执行权限
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
+      # 7. 设置签名密钥库
       - name: 🔐 Setup signing keystore
         run: |
           if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
@@ -121,6 +130,7 @@ jobs:
           echo "📦 Generated APK files:"
           find app/build/outputs -name "*.apk" -exec ls -la {} \;
       
+      # 9. 上传APK产物（便于后续下载和发布）
       - name: ⬆️ Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -131,42 +141,80 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      # 10. 清理敏感文件
+      # 10. 清理敏感文件（密钥库）
       - name: 🧹 Cleanup keystore
         run: |
           rm -f app/release.keystore
           echo "✅ Keystore cleaned up"
 
-  # 创建发布版本
+  # 第二个环节：创建GitHub发布版本
   Create_Release:
     name: 🚀 Create GitHub Release
-    needs: Android_Build  # 依赖构建作业
+    needs: Android_Build  # 依赖于Android_Build作业
     runs-on: ubuntu-latest
+    # 此job需要contents: write权限来创建Release:cite[6]
+    permissions:
+      contents: write
+
     steps:
+      # 1. 下载之前上传的构建产物
       - name: 📦 Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: signed-apk-${{ needs.Android_Build.outputs.build_version }}
           path: artifacts/
       
+      # 2. 列出下载的文件，确认路径正确（调试用）
+      - name: 📋 List downloaded files
+        run: |
+          echo "Downloaded files:"
+          find artifacts/ -type f -name "*.apk" -o -name "*.aab" | while read file; do
+            echo "✅ Found: $file"
+          done
+          
+          # 检查是否有文件匹配发布模式
+          APK_COUNT=$(find artifacts/ -name "*.apk" | wc -l)
+          AAB_COUNT=$(find artifacts/ -name "*.aab" | wc -l)
+          
+          if [ $APK_COUNT -eq 0 ] && [ $AAB_COUNT -eq 0 ]; then
+            echo "❌ Error: No APK or AAB files found in artifacts/"
+            exit 1
+          fi
+          
+          echo "Found $APK_COUNT APK files and $AAB_COUNT AAB files"
+      
+      # 3. 创建GitHub Release
       - name: 📝 Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.Android_Build.outputs.build_version }}
-          name: Release ${{ needs.Android_Build.outputs.build_version }}
-          body: |
-            Automated release for commit ${{ github.sha }}
-            
-            **Build Date:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
-            
-            **Changelog:**
-            ${{ needs.Android_Build.outputs.changelog_content }}
-          draft: false
-          prerelease: false
-          files: |
-            artifacts/*.apk
-            artifacts/*.aab
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用Github提供的token:cite[2]
+        with:
+          tag_name: v${{ needs.Android_Build.outputs.build_version }} # 添加 'v' 前缀是常见的版本标签做法:cite[6]
+          name: Release v${{ needs.Android_Build.outputs.build_version }}
+          body: |
+            ## 版本 v${{ needs.Android_Build.outputs.build_version }}
+            
+            **构建日期:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            **提交SHA:** ${{ github.sha }}
+            
+            ### 变更内容:
+            ${{ needs.Android_Build.outputs.changelog_content }}
+            
+            ### 下载:
+            此版本提供了签名的APK和Android App Bundle (AAB)文件。
+            
+            *构建和发布过程由GitHub Actions自动化完成。*
+          draft: false # 直接发布，非草稿:cite[2]
+          prerelease: false # 正式发布版本:cite[2]
+          files: |
+            artifacts/**/*.apk
+            artifacts/**/*.aab
+
+      # 4. 发布完成通知
+      - name: ✅ Release completed
+        run: |
+          echo "🎉 GitHub Release created successfully!"
+          echo "🏷️ Version: v${{ needs.Android_Build.outputs.build_version }}"
+          echo "🔗 Release URL: ${{ steps.create_release.outputs.html_url }}"
 
