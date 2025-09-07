@@ -2,9 +2,12 @@ package io.qzz.studyhard.markdown;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,6 +23,7 @@ import java.io.InputStreamReader;
 
 import io.noties.markwon.Markwon;
 import io.qzz.studyhard.markdown.network.MarkdownDownloader;
+import com.csabhi.autoupdater.AutoUpdater;
 
 public class MainActivity extends Activity {
     private EditText urlEditText;
@@ -46,6 +50,8 @@ public class MainActivity extends Activity {
         } else {
             setContentView(R.layout.activity_main);
             initializeViews();
+            // 检查应用更新
+            checkForUpdates();
         }
     }
     
@@ -134,6 +140,159 @@ public class MainActivity extends Activity {
         
         // 根据屏幕方向调整布局
         adjustLayoutForOrientation();
+    }
+    
+    private void checkForUpdates() {
+        // 获取当前设备的CPU架构
+        String abi = getCurrentABI();
+        
+        // 获取当前应用版本号
+        String currentVersion = getCurrentVersion();
+        
+        // 构建配置文件URL（实际项目中应该是一个网络地址）
+        String configUrl = "https://example.com/update_config.json"; // 替换为实际的配置文件地址
+        
+        // 简化实现：直接使用本地配置文件检查版本
+        checkVersionAndUpdate(abi, currentVersion);
+    }
+    
+    private String getCurrentVersion() {
+        try {
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            return packageInfo.versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return "1.0"; // 默认版本
+        }
+    }
+    
+    private void checkVersionAndUpdate(String abi, String currentVersion) {
+        try {
+            // 读取本地配置文件
+            InputStream inputStream = getResources().openRawResource(R.raw.update_config);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder stringBuilder = new StringBuilder();
+            String line;
+            
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+            
+            reader.close();
+            inputStream.close();
+            
+            // 简化的JSON解析
+            String json = stringBuilder.toString();
+            
+            // 提取最新版本号
+            String latestVersion = extractJsonValue(json, "latestVersion");
+            String updateMessage = extractJsonValue(json, "updateMessage");
+            
+            // 检查是否需要更新
+            if (isVersionNewer(latestVersion, currentVersion)) {
+                // 提取对应架构的下载URL
+                String downloadUrl = extractArchitectureUrl(json, abi);
+                
+                // 配置自动更新
+                AutoUpdater autoUpdater = new AutoUpdater.Builder(this)
+                        .setDownloadUrl(downloadUrl)
+                        .setVersionName(latestVersion)
+                        .setDescription(updateMessage)
+                        .setDialogTitle("发现新版本")
+                        .setDialogDescription("检测到新版本，是否立即更新？")
+                        .setDownloadDescription("正在下载最新版本...")
+                        .setButtonUpdateText("立即更新")
+                        .setButtonCancelText("稍后更新")
+                        .setIcon(R.drawable.ic_launcher) // 使用应用图标
+                        .build();
+                
+                // 检查更新
+                autoUpdater.checkForUpdates();
+            }
+        } catch (Exception e) {
+            Log.e("UpdateCheck", "检查更新时出错", e);
+        }
+    }
+    
+    private boolean isVersionNewer(String latestVersion, String currentVersion) {
+        // 简化的版本号比较
+        try {
+            String[] latestParts = latestVersion.split("\\.");
+            String[] currentParts = currentVersion.split("\\.");
+            
+            int length = Math.max(latestParts.length, currentParts.length);
+            
+            for (int i = 0; i < length; i++) {
+                int latestPart = i < latestParts.length ? Integer.parseInt(latestParts[i]) : 0;
+                int currentPart = i < currentParts.length ? Integer.parseInt(currentParts[i]) : 0;
+                
+                if (latestPart > currentPart) {
+                    return true;
+                } else if (latestPart < currentPart) {
+                    return false;
+                }
+            }
+        } catch (NumberFormatException e) {
+            // 如果解析失败，进行字符串比较
+            return latestVersion.compareTo(currentVersion) > 0;
+        }
+        
+        return false;
+    }
+    
+    private String extractJsonValue(String json, String key) {
+        // 简化的JSON值提取
+        String searchKey = "\""+ key + "\":\"";
+        int startIndex = json.indexOf(searchKey);
+        if (startIndex != -1) {
+            startIndex += searchKey.length();
+            int endIndex = json.indexOf("\"", startIndex);
+            if (endIndex != -1) {
+                return json.substring(startIndex, endIndex);
+            }
+        }
+        return "";
+    }
+    
+    private String extractArchitectureUrl(String json, String abi) {
+        // 简化的架构URL提取
+        String searchKey = "\""+ abi + "\":\"";
+        int startIndex = json.indexOf(searchKey);
+        if (startIndex != -1) {
+            startIndex += searchKey.length();
+            int endIndex = json.indexOf("\"", startIndex);
+            if (endIndex != -1) {
+                return json.substring(startIndex, endIndex);
+            }
+        }
+        return "https://example.com/your-app-" + abi + "-latest.apk";
+    }
+    
+    private String getCurrentABI() {
+        // 获取当前设备支持的ABI
+        String[] supportedABIs = android.os.Build.SUPPORTED_ABIS;
+        
+        // 返回第一个（首选）ABI
+        if (supportedABIs.length > 0) {
+            String abi = supportedABIs[0];
+            
+            // 根据ABI返回对应的架构名称
+            switch (abi) {
+                case "armeabi-v7a":
+                    return "ARMv7";
+                case "arm64-v8a":
+                    return "ARMv8";
+                case "x86":
+                    return "x86";
+                case "x86_64":
+                    return "x86_64";
+                default:
+                    return abi;
+            }
+        }
+        
+        // 如果无法获取ABI，返回默认值
+        return "unknown";
     }
 
     private void downloadMarkdown() {

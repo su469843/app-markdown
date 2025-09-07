@@ -1,0 +1,12 @@
+{
+  "latestVersion": "1.5.0",
+  "latestVersionCode": 5,
+  "forceUpdate": false,
+  "updateMessage": "1. 新增功能\n2. 修复已知问题\n3. 优化用户体验\n4. 提升性能",
+  "downloadUrls": {
+    "ARMv7": "https://example.com/your-app-ARMv7-v1.5.0.apk",
+    "ARMv8": "https://example.com/your-app-ARMv8-v1.5.0.apk",
+    "x86": "https://example.com/your-app-x86-v1.5.0.apk",
+    "x86_64": "https://example.com/your-app-x86_64-v1.5.0.apk"
+  }
+}
