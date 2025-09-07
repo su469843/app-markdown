@@ -2,6 +2,7 @@ package io.qzz.studyhard.markdown;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -33,12 +34,47 @@ public class MainActivity extends Activity {
     
     private static final String DEFAULT_FILENAME = "markdown_content.txt";
     private static final int PICK_FILE_REQUEST_CODE = 1;
+    private static final String PREF_LICENSE_AGREED = "license_agreed";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
+        
+        // 检查是否已同意用户协议
+        if (!isLicenseAgreed()) {
+            showLicenseAgreement();
+        } else {
+            setContentView(R.layout.activity_main);
+            initializeViews();
+        }
+    }
+    
+    private boolean isLicenseAgreed() {
+        return getSharedPreferences("app_prefs", MODE_PRIVATE)
+                .getBoolean(PREF_LICENSE_AGREED, false);
+    }
+    
+    private void setLicenseAgreed(boolean agreed) {
+        getSharedPreferences("app_prefs", MODE_PRIVATE)
+                .edit()
+                .putBoolean(PREF_LICENSE_AGREED, agreed)
+                .apply();
+    }
+    
+    private void showLicenseAgreement() {
+        LicenseAgreementDialog dialog = new LicenseAgreementDialog(this);
+        dialog.setOnAgreeListener(new LicenseAgreementDialog.OnAgreeListener() {
+            @Override
+            public void onAgree() {
+                setLicenseAgreed(true);
+                setContentView(R.layout.activity_main);
+                initializeViews();
+            }
+        });
+        dialog.show();
+    }
+    
+    private void initializeViews() {
         // 初始化视图
         urlEditText = findViewById(R.id.urlEditText);
         filenameEditText = findViewById(R.id.filenameEditText);
@@ -95,6 +131,9 @@ public class MainActivity extends Activity {
         
         // 加载默认文件
         loadFile(DEFAULT_FILENAME);
+        
+        // 根据屏幕方向调整布局
+        adjustLayoutForOrientation();
     }
 
     private void downloadMarkdown() {
@@ -114,6 +153,9 @@ public class MainActivity extends Activity {
                 // 将下载的内容显示在编辑器中
                 editText.setText(content);
                 Toast.makeText(MainActivity.this, "下载成功", Toast.LENGTH_SHORT).show();
+                
+                // 自动跳转到编辑区
+                // 这里可以添加跳转逻辑，如果使用了ViewPager或者其他导航组件
             }
 
             @Override
@@ -139,6 +181,31 @@ public class MainActivity extends Activity {
             markwon.setMarkdown(previewText, markdownText);
         } else {
             previewText.setText("预览功能仅支持Markdown文件(.md, .markdown)");
+        }
+    }
+    
+    private void adjustLayoutForOrientation() {
+        // 根据屏幕方向调整布局
+        int orientation = getResources().getConfiguration().orientation;
+        
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // 横屏模式：左右布局
+            // 这里可以添加横屏布局的调整逻辑
+        } else {
+            // 竖屏模式：上下布局
+            // 这里可以添加竖屏布局的调整逻辑
+        }
+    }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // 屏幕方向改变时重新调整布局
+        adjustLayoutForOrientation();
+        
+        // 修复横屏模式下用户协议弹窗显示问题
+        if (!isLicenseAgreed()) {
+            showLicenseAgreement();
         }
     }
     
