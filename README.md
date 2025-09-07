@@ -89,7 +89,7 @@
 
 ## 联系方式
 
-项目维护者 - [your-email@example.com](mailto:your-email@example.com)
+项目维护者 - 
 
 ---
 
