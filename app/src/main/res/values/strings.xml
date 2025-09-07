@@ -1,3 +1,16 @@
 <resources>
-    <string name="app_name">markdown</string>
+    <string name="app_name">文件编辑器</string>
+    <string name="download_title">下载文件</string>
+    <string name="file_operations_title">文件操作</string>
+    <string name="content_title">文件内容</string>
+    <string name="preview_title">预览</string>
+    <string name="url_hint">请输入文件URL...</string>
+    <string name="filename_hint">文件名 (如: example.txt)</string>
+    <string name="content_hint">请输入文件内容...</string>
+    <string name="preview_placeholder">预览内容将显示在这里</string>
+    <string name="download_button">下载</string>
+    <string name="open_button">打开</string>
+    <string name="save_button">保存</string>
+    <string name="select_file_button">从设备选择文件</string>
+    <string name="preview_button">预览</string>
 </resources>

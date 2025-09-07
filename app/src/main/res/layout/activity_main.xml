@@ -4,106 +4,204 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#f5f5f5">
+    android:background="@color/light_gray">
 
-    <EditText
-        android:id="@+id/urlEditText"
+    <!-- 标题栏 -->
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="请输入Markdown文件的URL..."
-        android:inputType="textUri"
-        android:background="@android:color/white"
-        android:padding="12dp"
-        android:layout_marginBottom="8dp"
-        android:elevation="4dp"
-        android:textColor="#333333"
-        android:textColorHint="#999999" />
+        android:text="@string/app_name"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/dark_gray" />
 
+    <!-- URL输入区域 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="8dp">
-
-        <Button
-            android:id="@+id/downloadButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:text="下载"
-            android:backgroundTint="#4CAF50"
-            android:textColor="@android:color/white"
-            android:elevation="4dp" />
-
-        <Button
-            android:id="@+id/previewButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:text="预览"
-            android:backgroundTint="#2196F3"
-            android:textColor="@android:color/white"
-            android:elevation="4dp" />
-            
-        <Button
-            android:id="@+id/openButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:text="打开"
-            android:backgroundTint="#FF9800"
-            android:textColor="@android:color/white"
-            android:elevation="4dp" />
-            
-        <Button
-            android:id="@+id/saveButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:text="保存"
-            android:backgroundTint="#9C27B0"
-            android:textColor="@android:color/white"
-            android:elevation="4dp" />
-    </LinearLayout>
-
-    <EditText
-        android:id="@+id/editText"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="top"
-        android:hint="请输入Markdown内容..."
-        android:inputType="textMultiLine"
-        android:scrollbars="vertical"
+        android:orientation="vertical"
         android:background="@android:color/white"
-        android:padding="16dp"
-        android:layout_marginBottom="8dp"
-        android:elevation="4dp"
-        android:textColor="#333333"
-        android:textColorHint="#999999" />
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@android:color/white"
-        android:layout_marginTop="8dp"
-        android:padding="16dp"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"
         android:elevation="4dp">
 
         <TextView
-            android:id="@+id/previewText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="预览内容将显示在这里"
+            android:text="@string/download_title"
             android:textSize="16sp"
-            android:textColor="#333333"
-            android:lineSpacingExtra="4dp" />
-    </ScrollView>
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray" />
+
+        <EditText
+            android:id="@+id/urlEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/url_hint"
+            android:inputType="textUri"
+            android:background="@color/light_gray"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray"
+            android:textColorHint="@color/medium_gray" />
+
+        <Button
+            android:id="@+id/downloadButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/download_button"
+            android:backgroundTint="@color/primary_green"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- 文件操作区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"
+        android:elevation="4dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/file_operations_title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray" />
+
+        <EditText
+            android:id="@+id/filenameEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/filename_hint"
+            android:inputType="text"
+            android:background="@color/light_gray"
+            android:padding="12dp"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray"
+            android:textColorHint="@color/medium_gray" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/openButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="@string/open_button"
+                android:backgroundTint="@color/primary_blue"
+                android:textColor="@android:color/white" />
+
+            <Button
+                android:id="@+id/saveButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="@string/save_button"
+                android:backgroundTint="@color/primary_orange"
+                android:textColor="@android:color/white" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/selectFileButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/select_file_button"
+            android:backgroundTint="@color/primary_purple"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- 内容编辑区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="12dp"
+        android:elevation="4dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/content_title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray" />
+
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="top"
+            android:hint="@string/content_hint"
+            android:inputType="textMultiLine"
+            android:scrollbars="vertical"
+            android:background="@color/light_gray"
+            android:padding="12dp"
+            android:textColor="@color/dark_gray"
+            android:textColorHint="@color/medium_gray" />
+
+        <Button
+            android:id="@+id/previewButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/preview_button"
+            android:backgroundTint="@color/primary_gray"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- 预览区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@android:color/white"
+        android:padding="12dp"
+        android:layout_marginTop="12dp"
+        android:elevation="4dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/preview_title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"
+            android:textColor="@color/dark_gray" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/light_gray">
+
+            <TextView
+                android:id="@+id/previewText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="@string/preview_placeholder"
+                android:textSize="16sp"
+                android:textColor="@color/dark_gray"
+                android:lineSpacingExtra="4dp" />
+        </ScrollView>
+    </LinearLayout>
 </LinearLayout>

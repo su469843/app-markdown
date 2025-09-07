@@ -26,11 +26,42 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      # 创建keystore（用于测试构建）
+      - name: Create keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" -storetype pkcs12
 
-      - name: Upload Debug APK
+      # 构建所有架构的APK
+      - name: Build All APKs
+        run: ./gradlew assembleRelease --stacktrace
+
+      # 上传所有APK作为构建产物
+      - name: Upload Universal APK
         uses: actions/upload-artifact@v3
         with:
-          name: debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: universal-apk
+          path: app/build/outputs/apk/universal/release/app-universal-release.apk
+          
+      - name: Upload ARM64 APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: arm64-apk
+          path: app/build/outputs/apk/arm64V8a/release/app-arm64V8a-release.apk
+          
+      - name: Upload ARMv7 APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: arm32-apk
+          path: app/build/outputs/apk/armeabiV7a/release/app-armeabiV7a-release.apk
+          
+      - name: Upload x86_64 APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: x86_64-apk
+          path: app/build/outputs/apk/x86_64/release/app-x86_64-release.apk
+          
+      - name: Upload x86 APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: x86-apk
+          path: app/build/outputs/apk/x86/release/app-x86-release.apk
