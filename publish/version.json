@@ -1,0 +1,35 @@
+{
+  "version": "1.1.2",
+  "versionCode": 112,
+  "minSupportedVersion": "0.0.1",
+  "forceUpdate": false,
+  "downloadUrl": {
+    "arm64-v8a": "https://github.com/su469843/app-markdown/releases/download/v1.1.2/app-arm64V8a-release.apk",
+    "armeabi-v7a": "https://github.com/su469843/app-markdown/releases/download/v1.1.2/app-armeabiV7a-release.apk",
+    "x86_64": "https://github.com/su469843/app-markdown/releases/download/v1.1.2/app-x86_64-release.apk",
+    "x86": "https://github.com/su469843/app-markdown/releases/download/v1.1.2/app-x86-release.apk",
+    "universal": "https://github.com/su469843/app-markdown/releases/download/v1.1.2/app-universal-release.apk"
+  },
+  "changelog": "## [v1.1.2] - 2025-09-07\n\n### 新增\n- 添加了左侧侧边栏\n- UI改进\n\n### 修复\n- 修复了横屏就会闪退的问题",
+  "releaseDate": "2025-09-07",
+  "history": [
+    {
+      "version": "1.1.0",
+      "versionCode": 110,
+      "releaseDate": "2025-09-07",
+      "changelog": "### 新增\n- 添加了对多种文件类型的支持（.txt, .js, .html, .css, .md, .markdown）\n- 实现了从设备存储中选择和读取文件的功能\n- 增加了文件名输入框，用户可以指定要保存的文件名\n\n### 改进\n- 重新设计了用户界面，采用更现代化的布局\n- 添加了卡片式设计，使界面更加清晰和美观\n- 使用了更协调的颜色方案\n- 改进了布局结构，将功能模块化分组\n- 添加了标题和更好的视觉层次结构\n\n### 优化\n- 改进了文件操作流程\n- 增强了错误处理和用户提示\n- 优化了Markdown预览功能，仅对支持的文件类型生效"
+    },
+    {
+      "version": "1.0.0",
+      "versionCode": 100,
+      "releaseDate": "2025-09-06",
+      "changelog": "### 修复\n- 修复了部分问题"
+    },
+    {
+      "version": "0.0.1-beta",
+      "versionCode": 1,
+      "releaseDate": "2025-09-06",
+      "changelog": "### 新增\n- 首次正式发布\n- 实现了核心功能"
+    }
+  ]
+}
