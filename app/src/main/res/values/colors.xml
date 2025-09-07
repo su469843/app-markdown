@@ -7,4 +7,14 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- 新增现代颜色 -->
+    <color name="primary_blue">#2196F3</color>
+    <color name="primary_green">#4CAF50</color>
+    <color name="primary_orange">#FF9800</color>
+    <color name="primary_purple">#9C27B0</color>
+    <color name="primary_gray">#607D8B</color>
+    <color name="light_gray">#f5f5f5</color>
+    <color name="dark_gray">#333333</color>
+    <color name="medium_gray">#999999</color>
 </resources>
