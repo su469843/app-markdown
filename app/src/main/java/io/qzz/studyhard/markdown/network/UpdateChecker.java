@@ -94,18 +94,34 @@ public class UpdateChecker {
                             
                         if (!currentVersion.equals(latestVersion)) {
                             String changelog = json.optString("changelog", "");
-                            String downloadUrl = json.getString("downloadUrl");
-                            callback.onNewVersionAvailable(latestVersion, changelog, downloadUrl);
+                            JSONObject downloadUrls = json.getJSONObject("downloadUrl");
+                            String deviceAbi = getDeviceABI();
+                            String downloadUrl;
+                            
+                            // 根据设备架构选择下载链接
+                            if (downloadUrls.has(deviceAbi)) {
+                                downloadUrl = downloadUrls.getString(deviceAbi);
+                            } else {
+                                downloadUrl = downloadUrls.getString("universal");
+                            }
+                            
+                            boolean forceUpdate = json.optBoolean("forceUpdate", false);
+                            callback.onNewVersionAvailable(latestVersion, changelog, downloadUrl, forceUpdate);
                         } else {
                             callback.onNoUpdateAvailable();
                         }
+                        return; // 成功获取更新信息后退出循环
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "Error checking for updates", e);
-                    callback.onError("更新检查失败: " + e.getMessage());
+                    Log.e(TAG, "Error checking for updates from " + versionUrl, e);
+                    // 继续尝试下一个源
+                    continue;
                 }
             }
-        }).start();
+            // 如果所有源都失败了
+            callback.onError("无法从任何源获取更新信息");
+        }
+    }).start();
     }
     
     public void downloadUpdate(String downloadUrl) {
